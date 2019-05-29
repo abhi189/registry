@@ -1,0 +1,118 @@
+version: '2'
+services:
+    authenticate-app:
+        image: authenticate
+        environment:
+            - SPRING_PROFILES_ACTIVE=prod,swagger
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql-cron:3306/authenticate?useUnicode=true&characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+            - JHIPSTER_SLEEP=30
+            - SPRING_DATA_ELASTICSEARCH_CLUSTER_NODES=authenticate-elasticsearch:9300
+            - JHIPSTER_REGISTRY_PASSWORD=bud-12
+            - JAVA_OPTS=-Xmx512m -Xms256m
+    authenticate-elasticsearch:
+        image: elasticsearch:2.4.6
+
+    managementgateway-app:
+        image: managementgateway
+        environment:
+            - SPRING_PROFILES_ACTIVE=prod,swagger
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql-cron:3306/managementgateway?useUnicode=true&characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+            - JHIPSTER_SLEEP=30
+            - SPRING_DATA_ELASTICSEARCH_CLUSTER_NODES=managementgateway-elasticsearch:9300
+            - JHIPSTER_REGISTRY_PASSWORD=bud-12
+            - JAVA_OPTS=-Xmx512m -Xms256m
+        ports:
+            - 8080:8080
+    managementgateway-elasticsearch:
+        image: elasticsearch:2.4.6
+
+    billing-app:
+        image: billing
+        environment:
+            - SPRING_PROFILES_ACTIVE=prod,swagger
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql-cron:3306/billing?useUnicode=true&characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+            - JHIPSTER_SLEEP=30
+            - SPRING_MAIL_DEFAULT-ENCODING=UTF-8
+            - SPRING_MAIL_PROTOCOL=smtp
+            - SPRING_MAIL_SMTP_AUTH=true
+            - SPRING_MAIL_SMTP_STARTTLS_ENABLE=true
+            - SPRING_MAIL_HOST=mail.budderfly.com
+            - SPRING_MAIL_PORT=587
+            - SPRING_MAIL_FROM_EMAIL=notifications@budderfly.com
+            - SPRING_MAIL_USERNAME=notifications@budderfly.com
+            - SPRING_MAIL_PASSWORD=7jsZ2EyA
+            - JHIPSTER_SLEEP=0
+            - SPRING_DATA_ELASTICSEARCH_CLUSTER_NODES=billing-elasticsearch:9300
+            - JHIPSTER_REGISTRY_PASSWORD=bud-12
+            - JAVA_OPTS=-Xmx512m -Xms256m
+    billing-elasticsearch:
+        image: elasticsearch:2.4.6
+
+    scheduling-app:
+        image: scheduling
+        environment:
+            - SPRING_PROFILES_ACTIVE=prod,swagger
+            - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/eureka
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql-cron:3306/scheduling?useUnicode=true&characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+            - JHIPSTER_SLEEP=30
+            - SPRING_DATA_ELASTICSEARCH_CLUSTER_NODES=scheduling-elasticsearch:9300
+            - JHIPSTER_REGISTRY_PASSWORD=bud-12
+            - JAVA_OPTS=-Xmx512m -Xms256m
+            - HOST_URL=~HOST~
+            - GATEWAY_PORT=8080
+            - CONNECTION_X_XSRF_TOKEN=8740a346-053a-4010-9a8d-a82f661e731c
+            - CONNECTION_COOKIE=last-serviceName=currency-conversion-service; XSRF-TOKEN=8740a346-053a-4010-9a8d-a82f661e731c; io=XSW5sl6OqqpOv1gDAAAG
+            - LOGIN_USERNAME=admin
+            - LOGIN_PASSWORD=admin
+    scheduling-elasticsearch:
+        image: elasticsearch:2.4.6
+
+    db-mysql-cron:
+        image: db-mysql-cron
+        build: ../billing/src/main/docker/mysql-cron
+        volumes:
+            - /var/lib/mysql:/var/lib/mysql
+        environment:
+            - MYSQL_USER=root
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            - MYSQL_DATABASE=billing~managementgateway~authenticate~scheduling
+        command:             mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8
+            --explicit_defaults_for_timestamp
+        ports:
+            - 3306:3306
+
+    nginx:
+      image: nginx:1.13-alpine
+      volumes:
+      - ../billing.web/build/www:/usr/share/nginx/html
+      - ../billing.web/site.conf:/etc/nginx/conf.d/default.conf
+      ports:
+      - 8092:8092
+
+    jhipster-registry:
+        image: jhipster/jhipster-registry:v3.2.4
+        volumes:
+            - ./central-server-config:/central-config
+        # By default the JHipster Registry runs with the "dev" and "native"
+        # Spring profiles.
+        # "native" profile means the filesystem is used to store data, see
+        # http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html
+        environment:
+            - SPRING_PROFILES_ACTIVE=dev,native
+            - SECURITY_USER_PASSWORD=bud-12
+            - JHIPSTER_REGISTRY_PASSWORD=bud-12
+            - JHIPSTER_LOGGING_LOGSTASH_ENABLED=true
+            - JHIPSTER_LOGGING_LOGSTASH_HOST=jhipster-logstash
+            - JHIPSTER_METRICS_LOGS_ENABLED=true
+            - JHIPSTER_METRICS_LOGS_REPORTFREQUENCY=60
+            # - GIT_URI=https://github.com/jhipster/jhipster-registry/
+            # - GIT_SEARCH_PATHS=central-config
+        ports:
+            - 8761:8761

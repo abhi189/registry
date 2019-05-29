@@ -1,0 +1,19 @@
+{
+  "generator-jhipster": {
+    "appsFolders": [
+      "authenticate",
+      "gateway.microservice",
+      "measurement.microservice"
+    ],
+    "directoryPath": "../",
+    "gatewayType": "zuul",
+    "monitoring": "elk",
+    "consoleOptions": [
+      "curator",
+      "zipkin"
+    ],
+    "serviceDiscoveryType": "eureka",
+    "adminPassword": "bud-12",
+    "jwtSecretKey": "62f7304a11a2919075f787b4d06fa102a2657d91"
+  }
+}
